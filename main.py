@@ -8,18 +8,55 @@ import numpy as np
 import plotly.graph_objects as go
 from scipy.ndimage import binary_erosion
 import os
+import io
+import plotly.io as pio
 
-# Streamlit title and description
-st.title("3D Brain Hemorrhage Detection and Visualization")
-st.write("""
-This app detects and visualizes brain hemorrhage using a U-Net model.
-You can select a brain MRI scan (in NIfTI format) from the sample folder.
-""")
+# Sidebar with logo
+st.sidebar.image('/Users/nimbuss/Downloads/3D-Brainreconstruct/BrainStroke_Segmentation/smte_logo.png', use_column_width=True)
 
-# File selection from sample folder
+# Sidebar for image selection and additional options
+st.sidebar.title("3D Brain Stroke Visualization")
+
+# Image selection options
 sample_folder = 'sample'
 files = [f for f in os.listdir(sample_folder) if f.endswith('.nii')]
-selected_file = st.selectbox("Select a brain MRI scan", files)
+selected_file = st.sidebar.selectbox("เลือกตัวอย่าง", files)
+image_path = os.path.join(sample_folder, selected_file)
+
+# Slider for stroke threshold
+stroke_threshold = st.sidebar.slider("เลือกความมั่นใจของการตรวจจับเส้นเลือด", min_value=0.0, max_value=1.0, value=0.9)
+
+# Colormap selection for stroke visualization
+colormap = st.sidebar.selectbox("เลือกสีเส้นเลือด", ["Magma", "Viridis", "Plasma", "Inferno", "Cividis", "Blue"])
+
+# Define stroke color based on selected colormap
+stroke_color_map = {
+    "Magma": "#ff0000", 
+    "Viridis": "#440154",  # A color from the viridis colormap
+    "Plasma": "#f0f921",   # A color from the plasma colormap
+    "Inferno": "#6e003a",  # A color from the inferno colormap
+    "Cividis": "#003f5c",
+    "Blue" : "#0000FF"   # Blue color for stroke
+}
+
+# Colormap selection for brain color
+colormap_brain = st.sidebar.selectbox("เลือกสีสมอง", ["Blue", "Viridis", "Plasma", "Inferno", "Cividis", "Magma"])
+
+# Define brain color based on selected colormap
+brain_color_map = {
+    "Magma": "#ff0000", 
+    "Viridis": "#440154",  # A color from the viridis colormap
+    "Plasma": "#f0f921",   # A color from the plasma colormap
+    "Inferno": "#6e003a",  # A color from the inferno colormap
+    "Cividis": "#003f5c",
+    "Blue" : "#0000FF"   # Blue color for brain
+}
+
+stroke_color = stroke_color_map.get(colormap, "#0000FF")  # Default to Blue if not found
+brain_color = brain_color_map.get(colormap_brain, "#ff0000")  # Default to Red if not found
+
+# Checkbox to toggle stroke border display
+show_stroke_border = st.sidebar.checkbox("Show Stroke Border", value=True)
 
 # Load the model
 model = smp.Unet(
@@ -41,7 +78,6 @@ model = model.to(device)
 model.eval()
 
 # Load the selected image
-image_path = os.path.join(sample_folder, selected_file)
 image = nib.load(image_path)
 image_data = image.get_fdata()
 
@@ -71,12 +107,12 @@ for i in range(image_data_resized.shape[2]):  # Loop through each slice along th
     # Store the predicted mask in the prediction volume
     prediction_volume[:, :, i] = slice_pred[0, 0]
 
-# Create a brain mask based on intensity thresholding
-brain_mask = image_data_resized > 0.1  # Adjust the threshold as needed
+# Default brain mask threshold for full brain mask
+default_confidence_threshold = 0.21
+brain_mask = image_data_resized > default_confidence_threshold
 
-# Convert the stroke prediction to a binary mask
-threshold = 0.9
-stroke_mask = prediction_volume > threshold
+# Convert the stroke prediction to a binary mask using the stroke threshold slider
+stroke_mask = prediction_volume > stroke_threshold
 
 # Generate borders by subtracting the eroded mask from the original mask
 brain_border = brain_mask.astype(int) - binary_erosion(brain_mask).astype(int)
@@ -86,7 +122,10 @@ stroke_border = stroke_mask.astype(int) - binary_erosion(stroke_mask).astype(int
 brain_border_x, brain_border_y, brain_border_z = np.where(brain_border)
 stroke_border_x, stroke_border_y, stroke_border_z = np.where(stroke_border)
 
-# Create a 3D scatter plot for the brain border
+# Create traces for the plot
+data_traces = []
+
+# Always add the brain border trace
 brain_trace = go.Scatter3d(
     x=brain_border_x,
     y=brain_border_y,
@@ -94,27 +133,28 @@ brain_trace = go.Scatter3d(
     mode='markers',
     marker=dict(
         size=1,
-        color='blue',
+        color=brain_color,  # Use a single color directly for the brain border
         opacity=0.4
     ),
-    name='Brain Border'
 )
+data_traces.append(brain_trace)
 
-# Create a 3D scatter plot for the stroke border
-stroke_trace = go.Scatter3d(
-    x=stroke_border_x,
-    y=stroke_border_y,
-    z=stroke_border_z,
-    mode='markers',
-    marker=dict(
-        size=1.5,
-        color='red',
-        opacity=0.6
-    ),
-    name='Stroke Border'
-)
+# Conditionally add the stroke border trace based on the checkbox
+if show_stroke_border:
+    stroke_trace = go.Scatter3d(
+        x=stroke_border_x,
+        y=stroke_border_y,
+        z=stroke_border_z,
+        mode='markers',
+        marker=dict(
+            size=1.5,
+            color=stroke_color,  # Use a single color directly for the stroke border
+            opacity=0.6
+        ),
+    )
+    data_traces.append(stroke_trace)
 
-# Set up the layout of the plot with the legend at the bottom
+# Set up the layout of the plot to maximize the 3D plot size
 layout = go.Layout(
     legend=dict(
         orientation="h",
@@ -128,11 +168,29 @@ layout = go.Layout(
         yaxis=dict(visible=True),
         zaxis=dict(visible=True)
     ),
-    margin=dict(l=0, r=0, b=0, t=0),
+    margin=dict(l=10, r=10, b=10, t=10),  # Adjust margins to ensure the plot occupies more space
+    height=1200,  # Increase the height of the plot
+    width=1400    # Increase the width of the plot
 )
 
 # Combine the traces and create the figure
-fig = go.Figure(data=[brain_trace, stroke_trace], layout=layout)
+fig = go.Figure(data=data_traces, layout=layout)
 
-# Display the figure
-st.plotly_chart(fig)
+# Generate the image of the plot
+img_bytes = pio.to_image(fig, format='png')
+
+# Create columns for the plot and the download button
+col1, col2 = st.columns([4, 1])  # Adjust the ratio as needed
+
+with col1:
+    # Display the figure
+    st.plotly_chart(fig, use_container_width=True)  # Ensure the plot uses the full container width
+
+with col2:
+    # Add a download button to the right of the plot
+    st.sidebar.download_button(
+        label="ดาวน์โหลดผลลัพธ์",
+        data=img_bytes,
+        file_name='brain_stroke_plot.png',
+        mime='image/png'
+    )
