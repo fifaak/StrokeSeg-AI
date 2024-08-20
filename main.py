@@ -114,8 +114,15 @@ stroke_trace = go.Scatter3d(
     name='Stroke Border'
 )
 
-# Set up the layout of the plot
+# Set up the layout of the plot with the legend at the bottom
 layout = go.Layout(
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.2,  # Position the legend below the plot
+        xanchor="center",
+        x=0.5
+    ),
     scene=dict(
         xaxis=dict(visible=True),
         yaxis=dict(visible=True),
