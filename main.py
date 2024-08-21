@@ -8,20 +8,27 @@ import numpy as np
 import plotly.graph_objects as go
 from scipy.ndimage import binary_erosion
 import os
-import io
 import plotly.io as pio
 
 # Sidebar with logo
-st.sidebar.image('/Users/nimbuss/Downloads/3D-Brainreconstruct/BrainStroke_Segmentation/smte_logo.png', use_column_width=True)
+st.sidebar.image('./smte_logo.png', use_column_width=True)
 
 # Sidebar for image selection and additional options
 st.sidebar.title("3D Brain Stroke Visualization")
+# Define the correct folder and file name
+sample_folder = './sample'
+selected_file = "CT_AVM.nii"  # Use the actual file name here
 
-# Image selection options
-sample_folder = 'sample'
-files = [f for f in os.listdir(sample_folder) if f.endswith('.nii')]
-selected_file = st.sidebar.selectbox("เลือกตัวอย่าง", files)
+# Create a selectbox with only the specific file option
+selected_file = st.sidebar.selectbox("เลือกตัวอย่าง", [selected_file])
+
+# Construct the full path to the selected file
 image_path = os.path.join(sample_folder, selected_file)
+
+
+
+# Add additional code to use `image_path` as needed
+
 
 # Slider for stroke threshold
 stroke_threshold = st.sidebar.slider("เลือกความมั่นใจของการตรวจจับเส้นเลือด", min_value=0.0, max_value=1.0, value=0.9)
@@ -67,7 +74,7 @@ model = smp.Unet(
 )
 
 # Load the model weights with proper device mapping
-model_path = 'unet_model_statedict_resnet34andimagenet_best.pth'
+model_path = './unet_model_statedict_resnet34andimagenet_best.pth'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.load_state_dict(torch.load(model_path, map_location=device))
 
@@ -108,7 +115,7 @@ for i in range(image_data_resized.shape[2]):  # Loop through each slice along th
     prediction_volume[:, :, i] = slice_pred[0, 0]
 
 # Default brain mask threshold for full brain mask
-default_confidence_threshold = 0.21
+default_confidence_threshold = 0.1
 brain_mask = image_data_resized > default_confidence_threshold
 
 # Convert the stroke prediction to a binary mask using the stroke threshold slider
@@ -134,9 +141,9 @@ brain_trace = go.Scatter3d(
     marker=dict(
         size=1,
         color=brain_color,  # Use a single color directly for the brain border
-        opacity=0.4
+        opacity=0.5
     ),
-)
+)   
 data_traces.append(brain_trace)
 
 # Conditionally add the stroke border trace based on the checkbox
@@ -149,12 +156,12 @@ if show_stroke_border:
         marker=dict(
             size=1.5,
             color=stroke_color,  # Use a single color directly for the stroke border
-            opacity=0.6
+            opacity=0.8
         ),
     )
     data_traces.append(stroke_trace)
 
-# Set up the layout of the plot to maximize the 3D plot size
+# Set up the layout of the plot to maximize the 3D plot size and enable rotation
 layout = go.Layout(
     legend=dict(
         orientation="h",
@@ -166,31 +173,78 @@ layout = go.Layout(
     scene=dict(
         xaxis=dict(visible=True),
         yaxis=dict(visible=True),
-        zaxis=dict(visible=True)
+        zaxis=dict(visible=True),
+        aspectratio=dict(x=1, y=1.2, z=0.8),  # Adjust the aspect ratio (x, y, z)
+        camera=dict(
+            eye=dict(x=2, y=2, z=2)  # Set the initial zoom-out by moving the camera further away
+        )
     ),
-    margin=dict(l=10, r=10, b=10, t=10),  # Adjust margins to ensure the plot occupies more space
-    height=1200,  # Increase the height of the plot
-    width=1400    # Increase the width of the plot
+    margin=dict(l=0, r=0, b=0, t=10),  # Adjust margins to ensure the plot occupies more space
+    height=1000,  # Increase the height of the plot
+    width=1000,   # Increase the width of the plot
+    updatemenus=[{
+        "buttons": [
+            {
+                "args": [None, {"frame": {"duration": 100, "redraw": True},
+                                "fromcurrent": True,
+                                "transition": {"duration": 100}}],
+                "label": "Rotate",
+                "method": "animate"
+            },
+            {
+                "args": [[None], {"frame": {"duration": 0, "redraw": True},
+                                  "mode": "immediate",
+                                  "transition": {"duration": 0}}],
+                "label": "Stop",
+                "method": "animate"
+            }
+        ],
+        "direction": "left",
+        "pad": {"r": 5, "t": 5},
+        "showactive": False,
+        "type": "buttons",
+        "x": 0.1,
+        "xanchor": "left",
+        "y": 0,
+        "yanchor": "top"
+    }]
 )
 
+# Create the rotation frames
+frames = [go.Frame(layout=dict(scene=dict(camera=dict(eye=dict(x=np.cos(theta)*2, y=np.sin(theta)*2, z=2)))))
+          for theta in np.linspace(0, 2*np.pi, 60)]
+
 # Combine the traces and create the figure
-fig = go.Figure(data=data_traces, layout=layout)
+fig = go.Figure(data=data_traces, layout=layout, frames=frames)
 
 # Generate the image of the plot
 img_bytes = pio.to_image(fig, format='png')
 
-# Create columns for the plot and the download button
-col1, col2 = st.columns([4, 1])  # Adjust the ratio as needed
+# Center the Plotly chart in the middle of the screen
+st.markdown("""
+    <style>
+    .main .block-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .main .block-container > .element-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-with col1:
-    # Display the figure
-    st.plotly_chart(fig, use_container_width=True)  # Ensure the plot uses the full container width
+# Display the plot in the main area
+st.plotly_chart(fig, use_container_width=True)
 
-with col2:
-    # Add a download button to the right of the plot
-    st.sidebar.download_button(
-        label="ดาวน์โหลดผลลัพธ์",
-        data=img_bytes,
-        file_name='brain_stroke_plot.png',
-        mime='image/png'
-    )
+# Move the download button to the sidebar
+st.sidebar.download_button(
+    label="Download Plot",
+    data=img_bytes,
+    file_name="brain_stroke_plot.png",
+    mime="image/png"
+)
