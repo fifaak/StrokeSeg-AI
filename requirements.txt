@@ -5,3 +5,4 @@ nibabel==5.2.1
 scipy==1.12.0
 plotly==5.18.0
 streamlit==1.28.0
+kaleido == 0.2.1

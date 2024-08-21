@@ -12,7 +12,7 @@ import io
 import plotly.io as pio
 
 # Sidebar with logo
-st.sidebar.image('/Users/nimbuss/Downloads/3D-Brainreconstruct/BrainStroke_Segmentation/smte_logo.png', use_column_width=True)
+st.sidebar.image('smte_logo.png', use_column_width=True)
 
 # Sidebar for image selection and additional options
 st.sidebar.title("3D Brain Stroke Visualization")
