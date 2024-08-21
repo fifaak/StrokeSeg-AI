@@ -34,29 +34,29 @@ image_path = os.path.join(sample_folder, selected_file)
 stroke_threshold = st.sidebar.slider("เลือกความมั่นใจของการตรวจจับเส้นเลือด", min_value=0.0, max_value=1.0, value=0.9)
 
 # Colormap selection for stroke visualization
-colormap = st.sidebar.selectbox("เลือกสีเส้นเลือด", ["Magma", "Viridis", "Plasma", "Inferno", "Cividis", "Blue"])
+colormap = st.sidebar.selectbox("เลือกสีเส้นเลือด", ["แดง", "ม่วง", "เหลือง", "แดงเหลือดหมู", "ฟ้าหมอง", "ฟ้า"])
 
 # Define stroke color based on selected colormap
 stroke_color_map = {
-    "Magma": "#ff0000", 
-    "Viridis": "#440154",  # A color from the viridis colormap
-    "Plasma": "#f0f921",   # A color from the plasma colormap
-    "Inferno": "#6e003a",  # A color from the inferno colormap
-    "Cividis": "#003f5c",
-    "Blue" : "#0000FF"   # Blue color for stroke
+    "แดง": "#ff0000", 
+    "ม่วง": "#440154",  # A color from the viridis colormap
+    "เหลือง": "#f0f921",   # A color from the plasma colormap
+    "แดงเหลือดหมู": "#6e003a",  # A color from the inferno colormap
+    "ฟ้าหมอง": "#003f5c",
+    "ฟ้า" : "#0000FF"   # Blue color for stroke
 }
 
 # Colormap selection for brain color
-colormap_brain = st.sidebar.selectbox("เลือกสีสมอง", ["Blue", "Viridis", "Plasma", "Inferno", "Cividis", "Magma"])
+colormap_brain = st.sidebar.selectbox("เลือกสีสมอง", ["ฟ้า", "ม่วง", "เหลือง", "แดงเลือดหมู", "ฟ้าหมอง", "แดง"])
 
 # Define brain color based on selected colormap
 brain_color_map = {
-    "Magma": "#ff0000", 
-    "Viridis": "#440154",  # A color from the viridis colormap
-    "Plasma": "#f0f921",   # A color from the plasma colormap
-    "Inferno": "#6e003a",  # A color from the inferno colormap
-    "Cividis": "#003f5c",
-    "Blue" : "#0000FF"   # Blue color for brain
+    "แดง": "#ff0000", 
+    "ม่วง": "#440154",  # A color from the viridis colormap
+    "เหลือง": "#f0f921",   # A color from the plasma colormap
+    "แดงเลือดหมู": "#6e003a",  # A color from the inferno colormap
+    "ฟ้าหมอง": "#003f5c",
+    "ฟ้า" : "#0000FF"   # Blue color for brain
 }
 
 stroke_color = stroke_color_map.get(colormap, "#0000FF")  # Default to Blue if not found
@@ -162,6 +162,7 @@ if show_stroke_border:
     data_traces.append(stroke_trace)
 
 # Set up the layout of the plot to maximize the 3D plot size and enable rotation
+# Set up the layout of the plot to maximize the 3D plot size and enable rotation
 layout = go.Layout(
     legend=dict(
         orientation="h",
@@ -176,7 +177,7 @@ layout = go.Layout(
         zaxis=dict(visible=True),
         aspectratio=dict(x=1, y=1.2, z=0.8),  # Adjust the aspect ratio (x, y, z)
         camera=dict(
-            eye=dict(x=2, y=2, z=2)  # Set the initial zoom-out by moving the camera further away
+            eye=dict(x=3, y=0, z=0)  # Set the initial side view along the x-axis
         )
     ),
     margin=dict(l=0, r=0, b=0, t=10),  # Adjust margins to ensure the plot occupies more space
@@ -210,12 +211,13 @@ layout = go.Layout(
     }]
 )
 
-# Create the rotation frames
-frames = [go.Frame(layout=dict(scene=dict(camera=dict(eye=dict(x=np.cos(theta)*2, y=np.sin(theta)*2, z=2)))))
+# Create the rotation frames to rotate around the z-axis for a side view
+frames = [go.Frame(layout=dict(scene=dict(camera=dict(eye=dict(x=2*np.cos(theta), y=2*np.sin(theta), z=0)))))
           for theta in np.linspace(0, 2*np.pi, 60)]
 
 # Combine the traces and create the figure
 fig = go.Figure(data=data_traces, layout=layout, frames=frames)
+
 
 # Generate the image of the plot
 img_bytes = pio.to_image(fig, format='png')
