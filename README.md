@@ -1,6 +1,7 @@
 # StrokeSeg AI: Brain Stroke Segmentation and 3D Reconstruction
 
 **StrokeSeg AI** is a deep learning project designed to segment brain strokes from CT scans using a U-Net architecture with a custom ResNet encoder. The project also includes 3D reconstruction from multiple segmented slices, enabling advanced visualization of hemorrhagic stroke regions.
+![Overview of Project's Architechture](docs/Overview.png)
 
 ## Table of Contents
 
@@ -87,8 +88,8 @@ Once the application is running, upload a CT scan to generate the stroke segment
 
 The model shows promising results, achieving an IoU of 0.743 and a Dice coefficient of 0.792 using ResNet50 as the encoder. 3D reconstruction allows for enhanced visualization and understanding of stroke-affected areas.
 
-![Segmentation Example](docs/segmentation_example.png)
-![3D Reconstruction](docs/3d_reconstruction.png)
+![Segmentation Example](docs/segment_2d.gif)
+![3D Reconstruction](docs/segment_3d.gif)
 
 ## License
 
