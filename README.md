@@ -87,9 +87,10 @@ Once the application is running, upload a CT scan to generate the stroke segment
 ## Results
 
 The model shows promising results, achieving an IoU of 0.743 and a Dice coefficient of 0.792 using ResNet50 as the encoder. 3D reconstruction allows for enhanced visualization and understanding of stroke-affected areas.
-
+###Segmentation Example
 ![Segmentation Example](docs/segment_2d.gif)
-![3D Reconstruction](docs/segment_3d.gif)
+###3D Reconstruction after predicted
+![3D Reconstruction](docs/3d_reconstruction.gif)
 
 ## License
 
