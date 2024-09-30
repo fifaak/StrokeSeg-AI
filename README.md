@@ -34,11 +34,27 @@ The model utilizes a U-Net architecture with a pre-trained ResNet encoder, optim
 
 ### Model Performance
 
-| Model                    | Epochs | IoU   | Dice  | mAP   |
-|--------------------------|--------|-------|-------|-------|
-| U-Net (ResNet50)          | 200    | 0.743 | 0.792 | 0.748 |
-| U-Net (ResNet101)         | 100    | 0.512 | 0.644 | 0.607 |
-| U-Net (EfficientNet-B0)   | 140    | 0.401 | 0.458 | 0.564 |
+The following table outlines the performance metrics for various models trained on the brain stroke segmentation task. Metrics include Intersection over Union (IoU), Dice coefficient, and mean Average Precision (mAP), which are key indicators of segmentation accuracy.
+
+| Model                               | Epochs | Batch | Learning Rate | Threshold | IoU   | Dice  | mAP   |
+|-------------------------------------|--------|-------|---------------|-----------|-------|-------|-------|
+| Baseline (Densenet121/Unet)         | 40     | 8     | 0.0001        | 0.5       | 0.4738| 0.5331| 0.5720|
+| Unet (Resnet34/Imagenet)            | 40     | 8     | 0.0001        | 0.5       | 0.3839| 0.4423| 0.4421|
+| Unet (Resnet34/Imagenet)            | 100    | 8     | 0.0001        | 0.5       | 0.5059| 0.5591| 0.5874|
+| Unet (Resnet50/Imagenet)            | 200    | 8     | 0.0001        | 0.5       | 0.7436| 0.7929| 0.7480|
+| Unet (Resnet50/Imagenet)            | 200    | 32    | 0.0001        | 0.5       | 0.3911| 0.4580| 0.5033|
+| Unet (Resnext101_32x8d/Imagenet)    | 100    | 8     | 0.0001        | 0.5       | 0.4017| 0.4580| 0.5638|
+| Unet (Efficientnet-b0/Imagenet)     | 140    | 8     | 0.0001        | 0.5       | 0.4017| 0.4580| 0.5638|
+| Deeplabv3 (Resnet101/Pretrained)    | 100    | 16    | 0.0001        | 0.5       | 0.5123| 0.6445| 0.6079|
+| Deeplabv3 (Resnet50/Pretrained)     | 100    | 16    | 0.0001        | 0.5       | 0.4897| 0.6142| 0.5721|
+
+### Best Model
+
+- **U-Net (Resnet50/Imagenet)** with 200 epochs, a batch size of 8, and a learning rate of 0.0001 achieved the best performance with:
+  - IoU: 0.7436
+  - Dice: 0.7929
+  - mAP: 0.7480
+
 
 ## 3D Reconstruction
 
