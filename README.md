@@ -1,5 +1,5 @@
 # StrokeSeg AI: Brain Stroke Segmentation and 3D Reconstruction
-
+## ***🏆 Award-Winning Project: 2024 Upper Central Region SMTE Computer Project Competition***
 **StrokeSeg AI** is a deep learning project designed to segment brain strokes from CT scans using a U-Net architecture with a custom ResNet encoder. The project also includes 3D reconstruction from multiple segmented slices, enabling advanced visualization of hemorrhagic stroke regions.
 ![Overview of Project's Architechture](docs/Overview.png)
 
